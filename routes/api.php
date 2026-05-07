@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Analysis\AnalysisController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\MeController;
@@ -19,4 +20,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::apiResource('resumes', ResumeController::class)
         ->only(['index', 'store', 'show', 'destroy']);
+
+    Route::apiResource('analyses', AnalysisController::class)
+        ->only(['index', 'store', 'show']);
 });

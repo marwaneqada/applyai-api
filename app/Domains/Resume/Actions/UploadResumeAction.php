@@ -5,6 +5,7 @@ namespace App\Domains\Resume\Actions;
 use App\Domains\Resume\Dto\UploadResumeDto;
 use App\Domains\Resume\Models\Resume;
 use App\Domains\Resume\Services\PdfTextExtractor;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -21,14 +22,14 @@ final class UploadResumeAction
         $path = $file->store('resumes', 'local');
 
         try {
-            $resume = Resume::create([
+            $resume = DB::transaction(fn (): Resume => Resume::create([
                 'user_id' => $dto->userId,
                 'original_filename' => $file->getClientOriginalName(),
                 'stored_path' => $path,
                 'file_size' => $file->getSize(),
                 'mime_type' => $file->getMimeType(),
                 'parse_status' => 'pending',
-            ]);
+            ]));
         } catch (Throwable $e) {
             Storage::disk('local')->delete($path);
 
