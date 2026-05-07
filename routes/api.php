@@ -21,6 +21,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::apiResource('resumes', ResumeController::class)
         ->only(['index', 'store', 'show', 'destroy']);
 
+    Route::get('/analyses/{analysis}/status', [AnalysisController::class, 'status']);
+
     Route::apiResource('analyses', AnalysisController::class)
         ->only(['index', 'store', 'show']);
 });

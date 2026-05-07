@@ -43,4 +43,15 @@ final class AnalysisController
 
         return new AnalysisResource($analysis->load('result'));
     }
+
+    public function status(Request $request, Analysis $analysis): JsonResponse
+    {
+        abort_unless($analysis->user_id === $request->user()->id, 403);
+
+        return response()->json([
+            'data' => [
+                'status' => $analysis->status->value,
+            ],
+        ]);
+    }
 }

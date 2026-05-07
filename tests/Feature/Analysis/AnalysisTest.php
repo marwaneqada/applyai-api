@@ -128,6 +128,23 @@ class AnalysisTest extends TestCase
             ->assertJsonPath('data.result.overall_score', 91);
     }
 
+    public function test_user_can_view_their_analysis_status(): void
+    {
+        $user = User::factory()->create();
+        $analysis = $this->createAnalysis($user, [
+            'status' => AnalysisStatus::Processing,
+        ]);
+
+        $this->withToken($user->createToken('api-token')->plainTextToken)
+            ->getJson("/api/analyses/{$analysis->id}/status")
+            ->assertOk()
+            ->assertExactJson([
+                'data' => [
+                    'status' => AnalysisStatus::Processing->value,
+                ],
+            ]);
+    }
+
     public function test_user_cannot_view_another_users_analysis(): void
     {
         $user = User::factory()->create();
@@ -136,6 +153,17 @@ class AnalysisTest extends TestCase
 
         $this->withToken($user->createToken('api-token')->plainTextToken)
             ->getJson("/api/analyses/{$analysis->id}")
+            ->assertForbidden();
+    }
+
+    public function test_user_cannot_view_another_users_analysis_status(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $analysis = $this->createAnalysis($otherUser);
+
+        $this->withToken($user->createToken('api-token')->plainTextToken)
+            ->getJson("/api/analyses/{$analysis->id}/status")
             ->assertForbidden();
     }
 
