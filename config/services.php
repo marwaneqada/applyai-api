@@ -22,6 +22,15 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    'ai' => [
+        'resume_analysis' => [
+            'provider' => env('AI_RESUME_ANALYSIS_PROVIDER', 'gemini'),
+            'model' => env('AI_RESUME_ANALYSIS_MODEL', 'gemini-2.5-flash'),
+            'timeout' => env('AI_RESUME_ANALYSIS_TIMEOUT', 60),
+            'temperature' => env('AI_RESUME_ANALYSIS_TEMPERATURE', 0.1),
+        ],
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

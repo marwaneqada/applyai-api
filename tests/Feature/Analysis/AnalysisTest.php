@@ -6,11 +6,13 @@ use App\Domains\Analysis\Enums\AnalysisStatus;
 use App\Domains\Analysis\Jobs\AnalyzeResumeJob;
 use App\Domains\Analysis\Models\Analysis;
 use App\Domains\Analysis\Models\AnalysisResult;
-use App\Domains\Analysis\Services\FakeAnalysisResultGenerator;
+use App\Domains\Analysis\Services\ResumeAnalysisAgent;
+use App\Domains\Analysis\Services\ResumeAnalysisService;
 use App\Domains\Resume\Models\Resume;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use RuntimeException;
 use Tests\TestCase;
 
 class AnalysisTest extends TestCase
@@ -172,8 +174,10 @@ class AnalysisTest extends TestCase
         $user = User::factory()->create();
         $analysis = $this->createAnalysis($user);
 
-        (new AnalyzeResumeJob($analysis->id))->handle(app(FakeAnalysisResultGenerator::class));
-        (new AnalyzeResumeJob($analysis->id))->handle(app(FakeAnalysisResultGenerator::class));
+        ResumeAnalysisAgent::fake(fn () => $this->validAiPayload())->preventStrayPrompts();
+
+        (new AnalyzeResumeJob($analysis->id))->handle(app(ResumeAnalysisService::class));
+        (new AnalyzeResumeJob($analysis->id))->handle(app(ResumeAnalysisService::class));
 
         $analysis->refresh();
 
@@ -182,7 +186,46 @@ class AnalysisTest extends TestCase
         $this->assertDatabaseHas('analysis_results', [
             'analysis_id' => $analysis->id,
             'overall_score' => 78,
+            'model_used' => 'gemini-2.5-flash',
         ]);
+    }
+
+    public function test_analyze_resume_job_marks_analysis_failed_when_ai_call_fails(): void
+    {
+        $user = User::factory()->create();
+        $analysis = $this->createAnalysis($user);
+
+        ResumeAnalysisAgent::fake(function (...$args): never {
+            throw new RuntimeException('AI provider unavailable.');
+        })->preventStrayPrompts();
+
+        (new AnalyzeResumeJob($analysis->id))->handle(app(ResumeAnalysisService::class));
+
+        $analysis->refresh();
+
+        $this->assertSame(AnalysisStatus::Failed, $analysis->status);
+        $this->assertSame('AI provider unavailable.', $analysis->error_message);
+        $this->assertDatabaseCount('analysis_results', 0);
+    }
+
+    public function test_analyze_resume_job_marks_analysis_failed_when_ai_payload_is_invalid(): void
+    {
+        $user = User::factory()->create();
+        $analysis = $this->createAnalysis($user);
+
+        ResumeAnalysisAgent::fake([
+            $this->validAiPayload([
+                'strengths' => 'Strong API experience.',
+            ]),
+        ])->preventStrayPrompts();
+
+        (new AnalyzeResumeJob($analysis->id))->handle(app(ResumeAnalysisService::class));
+
+        $analysis->refresh();
+
+        $this->assertSame(AnalysisStatus::Failed, $analysis->status);
+        $this->assertSame('AI analysis field [strengths] must be an array.', $analysis->error_message);
+        $this->assertDatabaseCount('analysis_results', 0);
     }
 
     /**
@@ -232,5 +275,26 @@ class AnalysisTest extends TestCase
             'job_description' => str_repeat('Build Laravel APIs and backend services. ', 4),
             'status' => AnalysisStatus::Pending,
         ], $overrides));
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function validAiPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'overall_score' => 78,
+            'keyword_score' => 82,
+            'experience_score' => 74,
+            'skills_score' => 80,
+            'matched_keywords' => ['Laravel'],
+            'missing_keywords' => ['Docker'],
+            'strengths' => ['Strong API experience.'],
+            'weaknesses' => ['Needs more DevOps detail.'],
+            'gap_analysis' => ['Add deployment examples.'],
+            'rewritten_bullets' => ['Built tested Laravel APIs.'],
+            'cover_letter' => 'Generated cover letter.',
+        ], $overrides);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Domains\Analysis\Jobs;
 
 use App\Domains\Analysis\Enums\AnalysisStatus;
 use App\Domains\Analysis\Models\Analysis;
-use App\Domains\Analysis\Services\FakeAnalysisResultGenerator;
+use App\Domains\Analysis\Services\ResumeAnalysisService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -17,7 +17,7 @@ final class AnalyzeResumeJob implements ShouldQueue
         private readonly int $analysisId,
     ) {}
 
-    public function handle(FakeAnalysisResultGenerator $resultGenerator): void
+    public function handle(ResumeAnalysisService $analysisService): void
     {
         $analysis = Analysis::query()->findOrFail($this->analysisId);
 
@@ -29,7 +29,7 @@ final class AnalyzeResumeJob implements ShouldQueue
 
             $analysis->result()->updateOrCreate(
                 [],
-                $resultGenerator->generate($analysis),
+                $analysisService->analyze($analysis),
             );
 
             $analysis->update([
