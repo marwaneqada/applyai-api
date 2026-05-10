@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Analysis\AnalysisController;
+use App\Http\Controllers\Application\ApplicationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\MeController;
@@ -25,4 +26,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::apiResource('analyses', AnalysisController::class)
         ->only(['index', 'store', 'show']);
+
+    Route::get('/applications/stats', [ApplicationController::class, 'stats']);
+    Route::patch('/applications/{application}/move', [ApplicationController::class, 'move']);
+
+    Route::apiResource('applications', ApplicationController::class)
+        ->only(['index', 'store', 'show', 'update', 'destroy']);
 });
