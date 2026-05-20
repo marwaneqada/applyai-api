@@ -18,12 +18,28 @@ class ResumePdfGeneratorServiceTest extends TestCase
         $this->assertGreaterThan(1000, strlen($pdf));
     }
 
+    public function test_it_generates_a_modern_resume_pdf(): void
+    {
+        $pdf = app(ResumePdfGeneratorService::class)->generate($this->structuredResume(), 'modern');
+
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertGreaterThan(1000, strlen($pdf));
+    }
+
+    public function test_it_generates_a_minimal_resume_pdf(): void
+    {
+        $pdf = app(ResumePdfGeneratorService::class)->generate($this->structuredResume(), 'minimal');
+
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertGreaterThan(1000, strlen($pdf));
+    }
+
     public function test_it_rejects_unknown_templates(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Resume PDF template [modern] is not supported.');
+        $this->expectExceptionMessage('Resume PDF template [creative] is not supported.');
 
-        app(ResumePdfGeneratorService::class)->generate($this->structuredResume(), 'modern');
+        app(ResumePdfGeneratorService::class)->generate($this->structuredResume(), 'creative');
     }
 
     /**

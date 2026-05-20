@@ -45,6 +45,56 @@ class AnalysisResumePdfTest extends TestCase
         $this->assertStringStartsWith('%PDF-', $response->getContent());
     }
 
+    public function test_user_can_generate_modern_resume_pdf_for_their_analysis(): void
+    {
+        $user = User::factory()->create();
+        $analysis = $this->createAnalysisWithResult($user);
+
+        ResumeStructuringAgent::fake()->preventStrayPrompts();
+        cache()->forever(
+            app(ResumeStructuringService::class)->cacheKey($analysis),
+            $this->structuredResume(),
+        );
+
+        $response = $this->withToken($user->createToken('api-token')->plainTextToken)
+            ->postJson("/api/analyses/{$analysis->id}/resume/pdf", [
+                'template' => 'modern',
+            ]);
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+        $this->assertSame(
+            "inline; filename=\"resume-modern-{$analysis->id}.pdf\"",
+            $response->headers->get('content-disposition'),
+        );
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
+
+    public function test_user_can_generate_minimal_resume_pdf_for_their_analysis(): void
+    {
+        $user = User::factory()->create();
+        $analysis = $this->createAnalysisWithResult($user);
+
+        ResumeStructuringAgent::fake()->preventStrayPrompts();
+        cache()->forever(
+            app(ResumeStructuringService::class)->cacheKey($analysis),
+            $this->structuredResume(),
+        );
+
+        $response = $this->withToken($user->createToken('api-token')->plainTextToken)
+            ->postJson("/api/analyses/{$analysis->id}/resume/pdf", [
+                'template' => 'minimal',
+            ]);
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+        $this->assertSame(
+            "inline; filename=\"resume-minimal-{$analysis->id}.pdf\"",
+            $response->headers->get('content-disposition'),
+        );
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
+
     public function test_resume_pdf_generation_returns_conflict_when_structured_resume_is_not_ready(): void
     {
         $user = User::factory()->create();
@@ -136,7 +186,22 @@ class AnalysisResumePdfTest extends TestCase
 
         $this->withToken($user->createToken('api-token')->plainTextToken)
             ->postJson("/api/analyses/{$analysis->id}/resume/pdf", [
-                'template' => 'modern',
+                'template' => 'creative',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['template']);
+    }
+
+    public function test_resume_pdf_generation_rejects_unknown_templates_without_json_accept_header(): void
+    {
+        $user = User::factory()->create();
+        $analysis = $this->createAnalysisWithResult($user);
+
+        ResumeStructuringAgent::fake()->preventStrayPrompts();
+
+        $this->withToken($user->createToken('api-token')->plainTextToken)
+            ->post("/api/analyses/{$analysis->id}/resume/pdf", [
+                'template' => 'harverd',
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['template']);

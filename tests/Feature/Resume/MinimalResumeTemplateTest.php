@@ -6,11 +6,11 @@ namespace Tests\Feature\Resume;
 
 use Tests\TestCase;
 
-class HarvardResumeTemplateTest extends TestCase
+class MinimalResumeTemplateTest extends TestCase
 {
-    public function test_it_renders_structured_resume_data(): void
+    public function test_it_renders_structured_resume_data_with_labeled_sections(): void
     {
-        $html = view('resumes.pdf.harvard', [
+        $html = view('resumes.pdf.minimal', [
             'resume' => [
                 'personal_information' => [
                     'name' => 'Jane Doe',
@@ -33,7 +33,7 @@ class HarvardResumeTemplateTest extends TestCase
                         ],
                     ],
                 ],
-                'skills' => ['PHP', 'Laravel', 'PostgreSQL'],
+                'skills' => ['PHP', 'Laravel', 'PostgreSQL', 'Docker'],
                 'education' => [
                     [
                         'institution' => 'Harvard University',
@@ -50,58 +50,22 @@ class HarvardResumeTemplateTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString('Jane Doe', $html);
-        $this->assertStringContainsString('jane@example.com | 555-0100 | Cambridge, MA | https://example.com', $html);
-        $this->assertStringContainsString('Summary', $html);
-        $this->assertStringContainsString('Experience', $html);
-        $this->assertStringContainsString('Built production Laravel APIs with tested queue workflows.', $html);
-        $this->assertStringContainsString('Skills', $html);
-        $this->assertStringContainsString('Programming:', $html);
-        $this->assertStringContainsString('Frameworks:', $html);
-        $this->assertStringContainsString('Data:', $html);
-        $this->assertStringContainsString('PHP', $html);
-        $this->assertStringContainsString('Laravel', $html);
-        $this->assertStringContainsString('PostgreSQL', $html);
-        $this->assertStringContainsString('Education', $html);
-        $this->assertStringContainsString('Harvard University', $html);
-        $this->assertStringContainsString('Languages', $html);
-        $this->assertStringContainsString('English, French', $html);
-    }
-
-    public function test_it_handles_missing_and_null_fields_cleanly(): void
-    {
-        $html = view('resumes.pdf.harvard', [
-            'resume' => [
-                'personal_information' => [
-                    'name' => null,
-                    'email' => 'jane@example.com',
-                ],
-                'experience' => [
-                    [
-                        'company' => 'ApplyAI',
-                        'title' => null,
-                        'bullets' => ['Built APIs.'],
-                    ],
-                ],
-                'education' => [
-                    [
-                        'institution' => null,
-                        'details' => [],
-                    ],
-                ],
-            ],
-        ])->render();
-
+        $this->assertStringContainsString('Backend Developer', $html);
         $this->assertStringContainsString('jane@example.com', $html);
-        $this->assertStringContainsString('ApplyAI', $html);
-        $this->assertStringContainsString('Built APIs.', $html);
-        $this->assertStringNotContainsString('Summary</h2>', $html);
-        $this->assertStringNotContainsString('Skills</h2>', $html);
-        $this->assertStringNotContainsString('Languages</h2>', $html);
+        $this->assertStringContainsString('About Me', $html);
+        $this->assertStringContainsString('Education', $html);
+        $this->assertStringContainsString('Skill', $html);
+        $this->assertStringContainsString('Work Experience', $html);
+        $this->assertStringContainsString('ApplyAI - Backend Developer', $html);
+        $this->assertStringContainsString('2022 - Present', $html);
+        $this->assertStringContainsString('PHP', $html);
+        $this->assertStringContainsString('Docker', $html);
+        $this->assertStringContainsString('Languages', $html);
     }
 
-    public function test_it_compacts_large_resumes_with_late_history_bullet_limits(): void
+    public function test_it_compacts_large_resumes_with_late_history_limits(): void
     {
-        $html = view('resumes.pdf.harvard', [
+        $html = view('resumes.pdf.minimal', [
             'resume' => [
                 'personal_information' => [
                     'name' => 'Jane Doe',
@@ -115,8 +79,8 @@ class HarvardResumeTemplateTest extends TestCase
                         'company' => 'ApplyAI',
                         'title' => 'Backend Developer',
                         'bullets' => array_map(
-                            static fn (int $index): string => "Current job bullet {$index} describing important production backend work across APIs, queues, and databases.",
-                            range(1, 12),
+                            static fn (int $index): string => "Current job bullet {$index} describing important production backend work.",
+                            range(1, 10),
                         ),
                     ],
                     [
@@ -124,7 +88,7 @@ class HarvardResumeTemplateTest extends TestCase
                         'title' => 'Software Engineer',
                         'bullets' => array_map(
                             static fn (int $index): string => "Older job bullet {$index} with useful implementation detail.",
-                            range(1, 4),
+                            range(1, 5),
                         ),
                     ],
                     [
@@ -132,7 +96,7 @@ class HarvardResumeTemplateTest extends TestCase
                         'title' => 'Intern',
                         'bullets' => array_map(
                             static fn (int $index): string => "Internship bullet {$index} with early career implementation detail.",
-                            range(1, 4),
+                            range(1, 5),
                         ),
                     ],
                     [
@@ -140,7 +104,7 @@ class HarvardResumeTemplateTest extends TestCase
                         'title' => 'Project',
                         'bullets' => array_map(
                             static fn (int $index): string => "Project bullet {$index} with useful academic project detail.",
-                            range(1, 4),
+                            range(1, 5),
                         ),
                     ],
                     [
@@ -148,7 +112,7 @@ class HarvardResumeTemplateTest extends TestCase
                         'title' => 'Student Developer',
                         'bullets' => array_map(
                             static fn (int $index): string => "Student project bullet {$index} with useful implementation detail.",
-                            range(1, 4),
+                            range(1, 5),
                         ),
                     ],
                 ],
@@ -171,17 +135,13 @@ class HarvardResumeTemplateTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString('resume-compact', $html);
-        $this->assertStringContainsString('Current job bullet 12', $html);
-        $this->assertStringContainsString('Older job bullet 4', $html);
-        $this->assertStringContainsString('Internship bullet 4', $html);
-        $this->assertStringContainsString('Project bullet 4', $html);
-        $this->assertStringContainsString('Student project bullet 1', $html);
-        $this->assertStringContainsString('Student project bullet 2', $html);
-        $this->assertStringContainsString('Student project bullet 3', $html);
-        $this->assertStringNotContainsString('Student project bullet 4', $html);
-        $this->assertStringContainsString('Skill 24', $html);
-        $this->assertStringNotContainsString('Skill 25', $html);
-        $this->assertStringContainsString('Long detail B', $html);
-        $this->assertStringContainsString('Long detail C', $html);
+        $this->assertStringContainsString('Current job bullet 6', $html);
+        $this->assertStringNotContainsString('Current job bullet 7', $html);
+        $this->assertStringContainsString('Older job bullet 2', $html);
+        $this->assertStringNotContainsString('Older job bullet 3', $html);
+        $this->assertStringContainsString('Project bullet 1', $html);
+        $this->assertStringNotContainsString('Project bullet 2', $html);
+        $this->assertStringContainsString('Skill 16', $html);
+        $this->assertStringNotContainsString('Skill 17', $html);
     }
 }

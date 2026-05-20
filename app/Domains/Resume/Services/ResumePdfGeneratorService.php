@@ -4,19 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domains\Resume\Services;
 
+use App\Domains\Resume\Enums\ResumePdfTemplate;
 use Barryvdh\DomPDF\PDF;
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
 
 final class ResumePdfGeneratorService
 {
-    /**
-     * @var array<string, string>
-     */
-    private const TEMPLATES = [
-        'harvard' => 'resumes.pdf.harvard',
-    ];
-
     public function __construct(
         private readonly Container $container,
     ) {}
@@ -38,13 +32,14 @@ final class ResumePdfGeneratorService
 
     private function resolveView(string $template): string
     {
-        $template = strtolower(trim($template));
+        $templateName = strtolower(trim($template));
+        $template = ResumePdfTemplate::tryFrom($templateName);
 
-        if (! array_key_exists($template, self::TEMPLATES)) {
-            throw new InvalidArgumentException("Resume PDF template [{$template}] is not supported.");
+        if (! $template instanceof ResumePdfTemplate) {
+            throw new InvalidArgumentException("Resume PDF template [{$templateName}] is not supported.");
         }
 
-        return self::TEMPLATES[$template];
+        return $template->view();
     }
 
     private function pdf(): PDF
