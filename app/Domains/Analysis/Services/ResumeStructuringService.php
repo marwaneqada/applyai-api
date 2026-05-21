@@ -44,6 +44,21 @@ final class ResumeStructuringService
         return "analysis:{$analysis->id}:structured_resume";
     }
 
+    public function isCached(Analysis $analysis): bool
+    {
+        return $this->cache->has($this->cacheKey($analysis));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function cached(Analysis $analysis): ?array
+    {
+        $structuredResume = $this->cache->get($this->cacheKey($analysis));
+
+        return is_array($structuredResume) ? $structuredResume : null;
+    }
+
     /**
      * @param  array<int, string>  $rewrittenBullets
      * @return array<string, mixed>
