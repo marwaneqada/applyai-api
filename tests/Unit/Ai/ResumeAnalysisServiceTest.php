@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\Ai;
 
 use App\Domains\Analysis\Enums\AnalysisStatus;
@@ -56,6 +58,25 @@ class ResumeAnalysisServiceTest extends TestCase
         });
     }
 
+    public function test_it_instructs_ai_to_recover_bullets_from_flattened_pdf_text(): void
+    {
+        ResumeAnalysisAgent::fake([$this->validAiPayload()])->preventStrayPrompts();
+
+        app(ResumeAnalysisService::class)->analyze(
+            $this->createAnalysis(
+                'Professional Experience Built e-commerce site with PrestaShop Created AI mini projects 2022 - 2023 Developer Example Co',
+            )
+        );
+
+        ResumeAnalysisAgent::assertPrompted(function ($prompt): bool {
+            return $prompt->contains('PDF extraction can flatten visual bullets into plain sentences')
+                && $prompt->contains('Treat action-oriented responsibility, achievement, project, internship, and academic project lines as original bullets')
+                && $prompt->contains('Include bullets from every job, internship, freelance/project, and academic project')
+                && $prompt->contains('Do not skip older roles or less job-relevant bullets')
+                && $prompt->contains('Built e-commerce site with PrestaShop Created AI mini projects');
+        });
+    }
+
     public function test_it_rejects_invalid_ai_payloads_through_the_normalizer(): void
     {
         ResumeAnalysisAgent::fake([
@@ -72,7 +93,7 @@ class ResumeAnalysisServiceTest extends TestCase
         );
     }
 
-    private function createAnalysis(): Analysis
+    private function createAnalysis(string $extractedText = 'Experienced Laravel developer with PostgreSQL experience.'): Analysis
     {
         $user = User::factory()->create();
         $resume = Resume::create([
@@ -82,7 +103,7 @@ class ResumeAnalysisServiceTest extends TestCase
             'file_size' => 100,
             'mime_type' => 'application/pdf',
             'parse_status' => 'success',
-            'extracted_text' => 'Experienced Laravel developer with PostgreSQL experience.',
+            'extracted_text' => $extractedText,
         ]);
 
         return Analysis::create([

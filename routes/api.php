@@ -23,6 +23,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         ->only(['index', 'store', 'show', 'destroy']);
 
     Route::get('/analyses/{analysis}/status', [AnalysisController::class, 'status']);
+    Route::post('/analyses/{analysis}/resume/structure', [AnalysisController::class, 'prepareResumeStructure']);
+    Route::get('/analyses/{analysis}/resume/structure/status', [AnalysisController::class, 'resumeStructureStatus']);
+    Route::post('/analyses/{analysis}/resume/pdf', [AnalysisController::class, 'resumePdf']);
 
     Route::apiResource('analyses', AnalysisController::class)
         ->only(['index', 'store', 'show']);
