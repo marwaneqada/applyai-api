@@ -1,58 +1,67 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ApplyAI API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+ApplyAI API is the Laravel backend for an AI-powered resume optimization and job application tracking platform.
 
-## About Laravel
+It allows users to upload resumes, compare them against job descriptions, receive structured AI analysis, generate tailored resume PDFs, and manage job applications through a kanban-style workflow.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This repository contains the backend only. It exposes JSON APIs and PDF responses for a separate frontend application.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Token-based authentication with Laravel Sanctum
+- Resume PDF upload and text extraction
+- Queued AI resume-to-job analysis
+- Structured analysis results:
+  - match score
+  - keywords
+  - gaps
+  - strengths
+  - weaknesses
+  - rewritten bullet suggestions
+  - cover letter
+- Async resume structuring for PDF generation
+- Resume PDF generation with multiple templates:
+  - `harvard`
+  - `modern`
+  - `minimal`
+- Job application tracking with kanban statuses
+- Drag-and-drop application ordering using stable float positions
+- User ownership checks for protected resources
 
-## Learning Laravel
+## What This Backend Handles
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+ApplyAI API is responsible for the core business logic of the platform:
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- authenticating users
+- storing uploaded resumes
+- extracting readable resume text
+- running background AI analysis jobs
+- returning structured analysis data
+- preparing structured resume data for PDF generation
+- rendering downloadable resume PDFs
+- tracking job applications
+- protecting user-owned data
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+The frontend is responsible for the user interface and consumes this API.
 
-## Agentic Development
+## Product Flow
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+1. A user registers or logs in.
+2. The user uploads a resume PDF.
+3. The backend extracts text from the resume.
+4. The user submits a job description for analysis.
+5. The backend queues an AI analysis job.
+6. The frontend polls until the analysis is completed.
+7. The user reviews the match score, keyword gaps, strengths, weaknesses, rewritten bullets, and cover letter.
+8. The user starts resume structuring for PDF generation.
+9. The backend prepares and caches structured resume data.
+10. The frontend polls until the structured resume is ready.
+11. The user generates a PDF using one of the supported templates.
+12. The user can create and manage application cards in the kanban board.
 
-```bash
-composer require laravel/boost --dev
+## Frontend API Guide
 
-php artisan boost:install
-```
+Detailed frontend integration documentation is available in:
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```text
+FRONTEND_API_GUIDE.md
