@@ -58,10 +58,3 @@ The frontend is responsible for the user interface and consumes this API.
 10. The frontend polls until the structured resume is ready.
 11. The user generates a PDF using one of the supported templates.
 12. The user can create and manage application cards in the kanban board.
-
-## Frontend API Guide
-
-Detailed frontend integration documentation is available in:
-
-```text
-FRONTEND_API_GUIDE.md
