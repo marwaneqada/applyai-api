@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Auth;
 
+use App\Domains\Auth\Enums\AccountType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -23,15 +26,36 @@ class AuthTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('user.name', 'Test User')
             ->assertJsonPath('user.email', 'test@example.com')
+            ->assertJsonPath('user.account_type', AccountType::Candidate->value)
             ->assertJsonStructure([
-                'user' => ['id', 'name', 'email'],
+                'user' => ['id', 'name', 'email', 'account_type'],
                 'token',
             ]);
 
         $user = User::where('email', 'test@example.com')->firstOrFail();
 
         $this->assertTrue(Hash::check('password123', $user->password));
+        $this->assertSame(AccountType::Candidate, $user->account_type);
+        $this->assertDatabaseHas('candidate_profiles', [
+            'user_id' => $user->id,
+        ]);
         $this->assertDatabaseCount('personal_access_tokens', 1);
+    }
+
+    public function test_registration_does_not_allow_clients_to_choose_an_account_type(): void
+    {
+        $this->postJson('/api/auth/register', [
+            'name' => 'HR User',
+            'email' => 'hr@example.com',
+            'password' => 'password123',
+            'account_type' => AccountType::Hr->value,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('account_type');
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'hr@example.com',
+        ]);
     }
 
     public function test_register_requires_valid_data(): void
@@ -67,8 +91,9 @@ class AuthTest extends TestCase
             ->assertOk()
             ->assertJsonPath('user.id', $user->id)
             ->assertJsonPath('user.email', 'login@example.com')
+            ->assertJsonPath('user.account_type', AccountType::Candidate->value)
             ->assertJsonStructure([
-                'user' => ['id', 'name', 'email'],
+                'user' => ['id', 'name', 'email', 'account_type'],
                 'token',
             ]);
 
@@ -109,6 +134,7 @@ class AuthTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.email', $user->email)
+            ->assertJsonPath('data.account_type', AccountType::Candidate->value)
             ->assertJsonMissingPath('password');
     }
 
